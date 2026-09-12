@@ -1,0 +1,13 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Redirect root to public/
+    RewriteRule ^$ public/ [L]
+    
+    # Redirect all other requests to public/ unless they exist as files/dirs
+    # Prevent infinite loop by excluding paths that already start with public/
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
