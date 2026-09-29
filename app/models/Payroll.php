@@ -9,7 +9,7 @@ class Payroll extends Model {
         \App\Core\PayrollSchema::ensure($this->db);
     }
 
-    // Ghana defaults: SSNIT employee contribution 5.5% of basic; PAYE on monthly chargeable income.
+    // SSNIT (5.5%) and PAYE are both computed on basic salary only; allowances and bonus are paid untaxed.
     // Adjust these if statutory rates change.
     const SSNIT_RATE = 0.055;
 
@@ -29,7 +29,7 @@ class Payroll extends Model {
     public static function compute($basic, $allowances, $bonus, $other) {
         $gross = $basic + $allowances + $bonus;
         $ssnit = round($basic * self::SSNIT_RATE, 2);
-        $tax = self::paye($gross - $ssnit);
+        $tax = self::paye($basic - $ssnit); // allowances and bonus are not taxed
         $deductions = $ssnit + $tax + $other;
         return [
             'gross_pay' => round($gross, 2),

@@ -103,7 +103,7 @@ $totalNet = array_sum(array_column($records, 'net_pay'));
                 </div>
             </div>
         </div>
-        <p class="small text-muted mt-3">SSNIT (5.5% of basic) and PAYE are calculated automatically using Ghana monthly rates.</p>
+        <p class="small text-muted mt-3">SSNIT (5.5%) and PAYE are calculated on basic salary only. Allowances and bonuses are not taxed.</p>
     </div>
 </main>
 
