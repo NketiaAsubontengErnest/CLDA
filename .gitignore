@@ -1,0 +1,26 @@
+# Environment-specific settings (contains live DB password) - copy config/database.example.php
+config/database.php
+
+# Temporary diagnostics
+public/dbtest.php
+zz_test.php
+
+# Logs
+*.log
+error_log
+php_errors.log
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+
+# Claude Code local files
+.claude/
+
+# Backups
+*.bak
+*.zip

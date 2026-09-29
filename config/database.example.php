@@ -17,8 +17,8 @@ return [
     ],
     'production' => [
         'host'     => 'localhost',
-        'name'     => 'cldgtppd_cld',  
-        'user'     => 'cldgtppd_root',   
-        'password' => '0554013980Aa@',           
+        'name'     => 'CPANEL_DB_NAME',
+        'user'     => 'CPANEL_DB_USER',
+        'password' => 'CPANEL_DB_PASSWORD',
     ],
 ];
