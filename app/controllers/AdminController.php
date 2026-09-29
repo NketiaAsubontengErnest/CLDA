@@ -263,6 +263,127 @@ class AdminController extends Controller {
         $this->view('admin/events', ['active_page' => 'admin', 'items' => $items]);
     }
 
+    // ---------------- Revenue (walk-in + online transactions) ----------------
+
+    public function revenue() {
+        $this->checkAuth();
+        $model = $this->model('Transaction');
+
+        if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_walkin'])) {
+            $amount = (float)($_POST['amount'] ?? 0);
+            if (trim($_POST['client_name'] ?? '') === '' || $amount <= 0) {
+                header('Location: ' . ROOT . '/admin/revenue?error=invalid'); exit;
+            }
+            $txn = $model->createWalkIn($_POST);
+            $result = \App\Core\Notifier::sendReceipt($txn);
+            header('Location: ' . ROOT . '/admin/revenue?success=1&receipt=' . $result); exit;
+        }
+
+        $search = trim($_GET['q'] ?? '');
+        $source = $_GET['source'] ?? '';
+        $perPage = 10;
+        $total = $model->count($search, $source);
+        $totalPages = max(1, (int)ceil($total / $perPage));
+        $page = min(max(1, (int)($_GET['page'] ?? 1)), $totalPages);
+
+        $this->view('admin/revenue/index', [
+            'active_page' => 'admin',
+            'items' => $model->getAll($search, $source, $perPage, ($page - 1) * $perPage),
+            'totals' => $model->totals(),
+            'search' => $search, 'source' => $source,
+            'page' => $page, 'totalPages' => $totalPages, 'total' => $total,
+        ]);
+    }
+
+    public function revenue_resend($id) {
+        $this->checkAuth();
+        $txn = $this->model('Transaction')->find($id);
+        $result = $txn ? \App\Core\Notifier::sendReceipt($txn) : 'failed';
+        header('Location: ' . ROOT . '/admin/revenue?resent=' . $result);
+        exit;
+    }
+
+    // ---------------- Employees & Payroll ----------------
+
+    public function employees() {
+        $this->checkAuth();
+        $model = $this->model('Employee');
+
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            try {
+                if (isset($_POST['add_employee'])) {
+                    $model->create($_POST);
+                    header('Location: ' . ROOT . '/admin/employees?success=1'); exit;
+                }
+                if (isset($_POST['edit_employee'])) {
+                    $model->update($_POST['id'], $_POST);
+                    header('Location: ' . ROOT . '/admin/employees?updated=1'); exit;
+                }
+            } catch (\PDOException $e) {
+                header('Location: ' . ROOT . '/admin/employees?error=' . ($e->getCode() == 23000 ? 'duplicate' : 'db')); exit;
+            }
+        }
+
+        $search = trim($_GET['q'] ?? '');
+        $items = $model->getAll($search);
+        $this->view('admin/payroll/employees', ['active_page' => 'admin', 'items' => $items, 'search' => $search]);
+    }
+
+    public function employees_delete($id) {
+        $this->checkAuth();
+        $this->model('Employee')->delete($id);
+        header('Location: ' . ROOT . '/admin/employees?deleted=1');
+        exit;
+    }
+
+    public function payroll() {
+        $this->checkAuth();
+        $model = $this->model('Payroll');
+        $month = $_GET['month'] ?? date('Y-m');
+        if (!preg_match('/^\d{4}-\d{2}$/', $month)) $month = date('Y-m');
+
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $month = preg_match('/^\d{4}-\d{2}$/', $_POST['month'] ?? '') ? $_POST['month'] : $month;
+            if (isset($_POST['generate'])) {
+                $n = $model->generate($month, $this->model('Employee'));
+                header('Location: ' . ROOT . '/admin/payroll?month=' . $month . '&generated=' . $n); exit;
+            }
+            if (isset($_POST['adjust'])) {
+                $model->adjust($_POST['id'], (float)$_POST['bonus'], (float)$_POST['other_deductions'], trim($_POST['notes'] ?? ''));
+                header('Location: ' . ROOT . '/admin/payroll?month=' . $month . '&updated=1'); exit;
+            }
+        }
+
+        $records = $model->getByMonth($month);
+        $this->view('admin/payroll/index', ['active_page' => 'admin', 'records' => $records, 'month' => $month]);
+    }
+
+    public function payroll_paid($id) {
+        $this->checkAuth();
+        $model = $this->model('Payroll');
+        $r = $model->find($id);
+        $model->markPaid($id);
+        header('Location: ' . ROOT . '/admin/payroll?month=' . ($r['pay_month'] ?? date('Y-m')) . '&updated=1');
+        exit;
+    }
+
+    public function payroll_delete($id) {
+        $this->checkAuth();
+        $model = $this->model('Payroll');
+        $r = $model->find($id);
+        $model->delete($id); // only removes records generated within the last 24 hours
+        $deleted = $r && !$model->find($id);
+        header('Location: ' . ROOT . '/admin/payroll?month=' . ($r['pay_month'] ?? date('Y-m')) . ($deleted ? '&deleted=1' : '&locked=1'));
+        exit;
+    }
+
+    public function payslip($id) {
+        $this->checkAuth();
+        $record = $this->model('Payroll')->find($id);
+        if (!$record) { header('Location: ' . ROOT . '/admin/payroll'); exit; }
+        $this->view('admin/payroll/payslip', ['record' => $record]);
+    }
+
     public function news_delete($id) {
         $this->checkAuth();
         $this->model('News')->delete($id);
@@ -352,8 +473,16 @@ class AdminController extends Controller {
             header('Location: ' . ROOT . '/admin/tests?updated=1'); exit;
         }
 
-        $tests = $model->getAll();
-        $this->view('admin/tests/index', ['active_page' => 'admin', 'tests' => $tests]);
+        $search = trim($_GET['q'] ?? '');
+        $perPage = 10;
+        $total = $model->countAll($search);
+        $totalPages = max(1, (int)ceil($total / $perPage));
+        $page = min(max(1, (int)($_GET['page'] ?? 1)), $totalPages);
+        $tests = $model->getAll($search, $perPage, ($page - 1) * $perPage);
+        $this->view('admin/tests/index', [
+            'active_page' => 'admin', 'tests' => $tests, 'search' => $search,
+            'page' => $page, 'totalPages' => $totalPages, 'total' => $total
+        ]);
     }
 
     public function tests_delete($id) {
@@ -756,6 +885,14 @@ class AdminController extends Controller {
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_settings'])) {
             $model->set('paystack_public_key', $_POST['paystack_public_key']);
             $model->set('paystack_secret_key', $_POST['paystack_secret_key']);
+            // Receipt delivery settings
+            foreach (['sms_sender_id', 'smtp_host', 'smtp_port', 'smtp_username'] as $k) {
+                $model->set($k, trim($_POST[$k] ?? ''));
+            }
+            // Secrets: a blank field keeps the stored value
+            foreach (['sms_api_key', 'smtp_password'] as $k) {
+                if (trim($_POST[$k] ?? '') !== '') $model->set($k, trim($_POST[$k]));
+            }
             header('Location: ' . ROOT . '/admin/settings?success=1');
             exit;
         }

@@ -104,6 +104,37 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Revenue Card -->
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100 rounded-4 hover-lift">
+                    <div class="card-body p-4 text-center">
+                        <div class="icon-box bg-success bg-opacity-10 text-success rounded-4 mb-3 mx-auto d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-receipt fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold">Revenue</h5>
+                        <p class="text-muted small">Walk-in payments, online transactions and receipts.</p>
+                        <a href="<?php echo ROOT; ?>/admin/revenue" class="btn btn-success w-100 rounded-3">Manage Revenue</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payroll Card -->
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100 rounded-4 hover-lift">
+                    <div class="card-body p-4 text-center">
+                        <div class="icon-box bg-dark bg-opacity-10 text-dark rounded-4 mb-3 mx-auto d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-money-check-alt fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold">Payroll</h5>
+                        <p class="text-muted small">Manage employee records and monthly payroll.</p>
+                        <div class="d-flex gap-2">
+                            <a href="<?php echo ROOT; ?>/admin/employees" class="btn btn-outline-dark w-50 rounded-3">Employees</a>
+                            <a href="<?php echo ROOT; ?>/admin/payroll" class="btn btn-dark w-50 rounded-3">Payroll</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </main>

@@ -87,7 +87,7 @@
             border: 1px solid #eee;
             padding: 15px;
             border-radius: 8px;
-            font-style: italic;
+            font-style: normal;
             font-size: 12px;
             color: #000000;
         }

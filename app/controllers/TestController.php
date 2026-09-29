@@ -339,6 +339,11 @@ class TestController extends Controller {
 
                 // Send Email to Admin
                 $submission = $model->getSubmission($submission_id);
+
+                // Record the transaction and send the receipt (skipped if the webhook already did)
+                $txn = $this->model('Transaction')->recordOnline($submission, $reference, $result['data']['amount'] / 100);
+                if ($txn) \App\Core\Notifier::sendReceipt($txn);
+
                 $subject = "Payment Received: " . $submission['test_title'];
                 $body = "Payment received from " . $submission['user_name'] . " (" . $submission['user_email'] . ") for test: " . $submission['test_title'] . ".<br>Amount: " . $submission['price'];
                 $this->sendEmail($subject, $body);

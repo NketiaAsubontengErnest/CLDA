@@ -4,14 +4,34 @@ namespace App\Models;
 use App\Core\Model;
 
 class Test extends Model {
-    public function getAll() {
-        $stmt = $this->db->query("
+    public function countAll($search = null) {
+        $sql = "SELECT COUNT(*) FROM tests t";
+        $params = [];
+        if ($search) {
+            $sql .= " WHERE (t.title LIKE :search OR t.description LIKE :search OR t.tags LIKE :search)";
+            $params['search'] = '%' . $search . '%';
+        }
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return (int)$stmt->fetchColumn();
+    }
+
+    public function getAll($search = null, $limit = null, $offset = 0) {
+        $sql = "
             SELECT t.*, COUNT(s.id) as submissions_count 
             FROM tests t 
-            LEFT JOIN submissions s ON t.id = s.test_id 
-            GROUP BY t.id 
-            ORDER BY t.created_at DESC
-        ");
+            LEFT JOIN submissions s ON t.id = s.test_id ";
+        $params = [];
+        if ($search) {
+            $sql .= " WHERE (t.title LIKE :search OR t.description LIKE :search OR t.tags LIKE :search) ";
+            $params['search'] = '%' . $search . '%';
+        }
+        $sql .= " GROUP BY t.id ORDER BY t.created_at DESC";
+        if ($limit !== null) {
+            $sql .= " LIMIT " . (int)$limit . " OFFSET " . (int)$offset;
+        }
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll();
     }
 

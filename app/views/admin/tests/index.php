@@ -27,6 +27,17 @@
             <div class="alert alert-warning rounded-3 mb-4">Test deleted successfully.</div>
         <?php endif; ?>
 
+        <form action="<?php echo ROOT; ?>/admin/tests" method="GET" class="mb-4">
+            <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white">
+                <span class="input-group-text border-0 bg-transparent ps-4"><i class="fas fa-search text-muted"></i></span>
+                <input type="text" name="q" class="form-control border-0 bg-transparent py-2 shadow-none" placeholder="Search tests by title, description or tag..." value="<?php echo htmlspecialchars($search ?? ''); ?>">
+                <?php if (!empty($search)): ?>
+                    <a href="<?php echo ROOT; ?>/admin/tests" class="btn border-0 bg-transparent text-muted py-2 d-flex align-items-center" title="Clear Search"><i class="fas fa-times"></i></a>
+                <?php endif; ?>
+                <button type="submit" class="btn btn-primary px-4 fw-bold">Search</button>
+            </div>
+        </form>
+
         <div class="card border-0 shadow-sm rounded-4">
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -46,7 +57,7 @@
                                 <tr>
                                     <td colspan="6" class="px-4 py-5 text-center text-muted">
                                         <i class="fas fa-clipboard-list fa-3x mb-3 opacity-25"></i>
-                                        <p>No tests found. Create one to get started.</p>
+                                        <p><?php echo !empty($search) ? 'No tests match your search.' : 'No tests found. Create one to get started.'; ?></p>
                                     </td>
                                 </tr>
                             <?php else: ?>
@@ -115,6 +126,25 @@
                     </table>
                 </div>
             </div>
+            <?php if (($totalPages ?? 1) > 1): ?>
+                <?php
+                $qs = !empty($search) ? '&q=' . urlencode($search) : '';
+                $from = max(1, $page - 2);
+                $to = min($totalPages, $page + 2);
+                ?>
+                <div class="card-footer bg-white border-0 rounded-bottom-4 d-flex flex-wrap justify-content-between align-items-center gap-2 px-4 py-3">
+                    <small class="text-muted">Page <?php echo $page; ?> of <?php echo $totalPages; ?> (<?php echo $total; ?> tests)</small>
+                    <nav aria-label="Tests pagination">
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>"><a class="page-link" href="?page=<?php echo $page - 1 . $qs; ?>">&laquo;</a></li>
+                            <?php for ($i = $from; $i <= $to; $i++): ?>
+                                <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>"><a class="page-link" href="?page=<?php echo $i . $qs; ?>"><?php echo $i; ?></a></li>
+                            <?php endfor; ?>
+                            <li class="page-item <?php echo $page >= $totalPages ? 'disabled' : ''; ?>"><a class="page-link" href="?page=<?php echo $page + 1 . $qs; ?>">&raquo;</a></li>
+                        </ul>
+                    </nav>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </main>
